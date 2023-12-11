@@ -478,6 +478,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buildingBlocks:
   - {fileID: 3060746294433261010, guid: f95584c8a208a544aa85c94d11fc6b02, type: 3}
+  - {fileID: 3060746294433261010, guid: ca0d733c494560e47badf06513e9aedc, type: 3}
+  - {fileID: 3060746294433261010, guid: 2af8fd89ad608cd41a14325abed48a70, type: 3}
   holoDistance: 5
   playerCamera: {fileID: 1961662668}
 --- !u!1 &1961662668
