@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class BuildingBlock : MonoBehaviour
 {
-    public Vector3 attachOffset;
-    
+    public BlockType blockType;
+
     void Start()
     {
         
@@ -15,5 +15,14 @@ public class BuildingBlock : MonoBehaviour
     void Update()
     {
         
+    }
+
+    void OnDrawGizmos()
+    {
+        foreach (Transform child in transform)
+        {
+            Gizmos.color = Color.white;
+            Gizmos.DrawWireSphere(child.position, 0.2f);
+        }
     }
 }

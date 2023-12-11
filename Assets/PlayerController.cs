@@ -13,17 +13,11 @@ public class PlayerController : MonoBehaviour
 	const string yAxis = "Mouse Y";
     public float jumpForce = 5f;
     public float speed = 5f;
-    public float holoDistance = 5f;
     public GameObject playerCamera;
-    public GameObject[] buildingBlocks;
-    private GameObject currentBuildingBlock;
-    private Material floorMaterial;
-
 
     void Start()
     {
-        floorMaterial = (Material)Resources.Load("Floor", typeof(Material));
-        currentBuildingBlock = buildingBlocks[0];
+
     }
 
     public float Sensitivity {
@@ -49,72 +43,6 @@ public class PlayerController : MonoBehaviour
         {
             Jump();
         }
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            CreateFloor();
-        }
-
-        moveHoloAround();
-
-        if (Input.GetKeyDown(KeyCode.Alpha1)) {
-            currentBuildingBlock = buildingBlocks[0];
-        } else if (Input.GetKeyDown(KeyCode.Alpha2)) {
-            currentBuildingBlock = buildingBlocks[1];
-        }
-    }
-
-    private void moveHoloAround()
-    {
-        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-        RaycastHit hit;
-        Vector3 finalHoloPosition = Vector3.zero;
-        if (Physics.Raycast(ray, out hit) && hit.distance < holoDistance)
-        {
-            finalHoloPosition = hit.point;
-        }
-        else
-        {
-            finalHoloPosition = playerCamera.transform.position + playerCamera.transform.forward * holoDistance;
-        }
-
-        Collider closestCollider = null;
-        float minimumDistance = float.MaxValue;
-        Collider[] hitColliders = Physics.OverlapBox(finalHoloPosition, currentBuildingBlock.transform.localScale);
-        foreach (Collider hitCollider in hitColliders)
-        {
-            if (hitCollider.tag == "BuildingBlock") {
-                Vector3 distanceSubstraction = hitCollider.transform.position - finalHoloPosition;
-                if (distanceSubstraction.magnitude < minimumDistance) {
-                    minimumDistance = distanceSubstraction.magnitude;
-                    closestCollider = hitCollider;
-                }
-            }
-        }
-
-        if (closestCollider != null) {
-            Vector3 subtraction = closestCollider.transform.position - finalHoloPosition;
-            subtraction.Normalize();
-
-            if (Math.Abs(subtraction.x) > Math.Abs(subtraction.z)) {
-                finalHoloPosition = closestCollider.transform.position - Math.Sign(subtraction.x) * (closestCollider.transform.right * currentBuildingBlock.transform.localScale.x);
-            } else {
-                finalHoloPosition = closestCollider.transform.position - Math.Sign(subtraction.z) * (closestCollider.transform.forward * currentBuildingBlock.transform.localScale.z);
-            }
-        }
-
-        finalHoloPosition += currentBuildingBlock.GetComponent<BuildingBlock>().attachOffset;
-
-        currentBuildingBlock.transform.position = finalHoloPosition;
-    }
-
-    void CreateFloor()
-    {
-        GameObject clonedHolo = Instantiate(currentBuildingBlock);
-        clonedHolo.transform.position = currentBuildingBlock.transform.position;
-        clonedHolo.AddComponent<BoxCollider>();
-        clonedHolo.GetComponent<BoxCollider>().tag = "BuildingBlock";
-        clonedHolo.GetComponent<Renderer>().material = floorMaterial;
     }
 
     void Jump()
