@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ public class Blueprint : MonoBehaviour
     public GameObject playerCamera;
     private int currentBlockIndex = 0;
     private GameObject targetAttachPoint;
+    public LayerMask rayLayer;
 
     void Start()
     {
@@ -28,6 +30,10 @@ public class Blueprint : MonoBehaviour
         }
         currentBuildingBlock = Instantiate(buildingBlocks[currentBlockIndex]);
         currentBuildingBlock.GetComponent<Renderer>().material = holoMaterial;
+        foreach (AttachPoint attachPoint in currentBuildingBlock.gameObject.GetComponentsInChildren<AttachPoint>())
+        {
+            attachPoint.gameObject.layer = LayerMask.NameToLayer("HoloAttachPoint");
+        }
     }
 
     void Update()
@@ -59,10 +65,11 @@ public class Blueprint : MonoBehaviour
     private void moveHoloAround()
     {
         Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        LayerMask ignoreLayer = ~rayLayer;
         RaycastHit hit;
         Vector3 finalHoloPosition;
         Debug.DrawRay(ray.origin, ray.direction * holoDistance, Color.red);
-        if (Physics.Raycast(ray, out hit) && hit.distance < holoDistance)
+        if (Physics.Raycast(ray, out hit, ignoreLayer) && hit.distance < holoDistance)
         {
             finalHoloPosition = hit.point;
         }
@@ -87,7 +94,7 @@ public class Blueprint : MonoBehaviour
             }
         }
 
-        if (closestCollider != null)
+        if (closestCollider != null && closestCollider.GetType() != typeof(SphereCollider))
         {
             float distance = float.MaxValue;
             Transform closestAttachPoint = null;
@@ -104,34 +111,60 @@ public class Blueprint : MonoBehaviour
                     closestAttachPoint = attachPoint;
                 }
             }
-
-            Vector3 normal = closestAttachPoint.position - closestCollider.transform.position;
-            normal.Normalize();
-
-            BlockType targetBlockType = closestCollider.GetComponent<BuildingBlock>().blockType;
-            BlockType sourceBlockType = currentBuildingBlock.GetComponent<BuildingBlock>().blockType;
-
-            foreach (Transform attachPoint in currentBuildingBlock.transform)
+            if (closestAttachPoint != null)
             {
-                if (doesAttachPointsNotMatch(attachPoint, closestAttachPoint))
-                {
-                    continue;
-                }
-                
-                Debug.DrawLine(attachPoint.position, closestAttachPoint.position, Color.red);
-                Vector3 attachPointToHoloNormal = attachPoint.position - currentBuildingBlock.transform.position;
-                attachPointToHoloNormal.Normalize();
+                Vector3 normal = closestAttachPoint.position - closestCollider.transform.position;
 
-                if ((targetBlockType==BlockType.Foundation && sourceBlockType==BlockType.Wall) || (targetBlockType==BlockType.Wall && sourceBlockType==BlockType.Ceiling) || Vector3.Dot(normal, attachPointToHoloNormal) <= -0.5f)
+                normal.Normalize();
+                Debug.DrawLine(closestAttachPoint.position, normal, Color.blue);
+                ChangeBlueprintColor(new Color(0.3176471f, 0.6627451f, 0.9215686f, 0.8862745f));
+                BlockType targetBlockType = closestCollider.GetComponent<BuildingBlock>().blockType;
+                BlockType sourceBlockType = currentBuildingBlock.GetComponent<BuildingBlock>().blockType;
+
+                foreach (Transform attachPoint in currentBuildingBlock.transform)
                 {
-                    targetAttachPoint = closestAttachPoint.gameObject;
-                    currentBuildingBlock.transform.position += closestAttachPoint.position - attachPoint.position;
-                    currentBuildingBlock.transform.rotation = closestAttachPoint.rotation;
-                    return;
+                    if (doesAttachPointsNotMatch(attachPoint, closestAttachPoint))
+                    {
+                        continue;
+                    }
+
+                    //Debug.DrawLine(attachPoint.position, closestAttachPoint.position, Color.blue);
+                    Vector3 attachPointToHoloNormal = attachPoint.position - currentBuildingBlock.transform.position;
+                    attachPointToHoloNormal.Normalize();
+                    Debug.DrawLine(attachPoint.position, attachPointToHoloNormal, Color.yellow);
+                    switch (sourceBlockType)
+                    {
+                        case BlockType.Foundation:
+                            if (Vector3.Dot(normal, attachPointToHoloNormal) <= -0.5f)
+                            {
+                                targetAttachPoint = closestAttachPoint.gameObject;
+                                currentBuildingBlock.transform.position += closestAttachPoint.position - attachPoint.position;
+                                currentBuildingBlock.transform.rotation = closestAttachPoint.rotation;
+                                return;
+                            }
+                            break;
+                        case BlockType.Wall:
+                            if (targetBlockType == BlockType.Foundation)
+                            {
+                                targetAttachPoint = closestAttachPoint.gameObject;
+                                currentBuildingBlock.transform.position += closestAttachPoint.position - attachPoint.position;
+                                currentBuildingBlock.transform.rotation = closestAttachPoint.rotation;
+                                return;
+                            }
+                            break;
+                        case BlockType.Ceiling:
+                            if (targetBlockType == BlockType.Wall) //&& Vector3.Dot(normal, attachPointToHoloNormal) == 0)
+                            {
+                                //targetAttachPoint = closestAttachPoint.gameObject;
+                                currentBuildingBlock.transform.position += closestAttachPoint.position - attachPoint.position;
+                                currentBuildingBlock.transform.rotation = closestAttachPoint.rotation;
+                            }
+                            break;
+                    }
                 }
-            }
+            }        
         }
-
+        ChangeBlueprintColor(new Color(0.77f, 0.05f, 0.10f, 0.95f));
         currentBuildingBlock.transform.position = finalHoloPosition;
     }
 
@@ -149,7 +182,15 @@ public class Blueprint : MonoBehaviour
             Gizmos.DrawWireCube(currentBuildingBlock.transform.position, currentBuildingBlock.transform.localScale / 1.7f * 2);
         }
     }
+    void ChangeBlueprintColor(Color color)
+    {
+        Renderer renderer = currentBuildingBlock.GetComponent<Renderer>();
+        if (renderer != null)
+        {
 
+            renderer.material.color = color;
+        }
+    }
     void CreateSelectedBlock()
     {
         GameObject foundation = Instantiate(buildingBlocks[currentBlockIndex]);
@@ -157,9 +198,10 @@ public class Blueprint : MonoBehaviour
         foundation.transform.rotation = currentBuildingBlock.transform.rotation;
         foundation.GetComponent<BoxCollider>().enabled = true;
         foundation.GetComponent<BoxCollider>().tag = "BuildingBlock";
-        if (targetAttachPoint != null)
+        foundation.GetComponent<BuildingBlock>().UpdateSnapPoints();
+        /*if (targetAttachPoint != null)
         {
             targetAttachPoint.GetComponent<AttachPoint>().isAttached = true;
-        }
+        }*/
     }
 }

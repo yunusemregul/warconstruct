@@ -25,4 +25,16 @@ public class BuildingBlock : MonoBehaviour
             Gizmos.DrawWireSphere(child.position, 0.2f);
         }
     }
+    public void UpdateSnapPoints()
+    {
+        foreach(Transform child in transform)
+        {
+            AttachPoint attachPoint = child.GetComponent<AttachPoint>();
+            if (child != null)
+            {
+                attachPoint.CheckForSnap();
+            }
+
+        }
+    }
 }

@@ -10,7 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 7086700508991388242}
   - component: {fileID: 3749121075880887155}
-  m_Layer: 0
+  - component: {fileID: -2440871725122082159}
+  m_Layer: 3
   m_Name: AttachPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -45,3 +46,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isAttached: 0
+  notSupportedBlockTypes: 
+  player: {fileID: 8846348811579822138, guid: d6fad6d92e85cda439825b68b1e17cd7, type: 3}
+--- !u!135 &-2440871725122082159
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5302683448591011999}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.02
+  m_Center: {x: 0, y: 0, z: 0}
